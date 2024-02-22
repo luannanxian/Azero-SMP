@@ -1,0 +1,221 @@
+import random
+
+from selenium import webdriver              #导包 无需多言
+from selenium.webdriver.common.by import By
+import numpy as np
+import pandas as pd
+import time
+import sys
+import datetime
+import gevent
+# from gevent import monkey
+
+# monkey.patch_all()
+df_array=[]
+#设置浏览器启动项
+option = webdriver.ChromeOptions()
+option.page_load_strategy = 'eager'#仅加载DOM树和HTML静态资源并解析 提高爬取速度
+option.add_argument("--headless") #隐藏浏览器界面 也可以删除该行，观察selenuim如何爬取数据
+driver = webdriver.Chrome(options=option) #启动浏览器
+
+def get_dates(year):
+    #
+    start_date = datetime.date(year=year, month=1, day=1)
+    end_date = start_date + datetime.timedelta(days=364)  # 判断闰年或非闰年
+    dates = []
+    current_date = start_date
+    while current_date <= end_date:
+        dates.append(str(current_date))
+        current_date += datetime.timedelta(days=1)
+    print(np.array(dates[0][8:10]))
+    return np.array(dates)
+
+def print_color(text, color):
+    colors = {
+        'black': '30',
+        'red': '31',
+        'green': '32',
+        'yellow': '33',
+        'blue': '34',
+        'magenta': '35',
+        'cyan': '36',
+        'white': '37'
+    }
+    if color not in colors:
+        print(text)  # 如果颜色不支持，以普通方式输出
+    else:
+        color_code = colors[color]
+        print(f"\033[{color_code}m{text}\033[0m")
+def get_data_from_web(url,i):
+    #加载页面
+    sum_home_team = []
+    sum_home_team = np.array(sum_home_team)
+    sum_away_team = []
+    sum_away_team = np.array(sum_away_team)
+    sum_match = []
+    sum_match = np.array(sum_match)
+    sum_match_time = []
+    sum_match_time = np.array(sum_match_time)
+    sum_match_round = []
+    sum_match_round = np.array(sum_match_round)
+    sum_home_goal, sum_away_goal = [], []
+    sum_home_goal, sum_away_goal = np.array(sum_home_goal), np.array(sum_away_goal)
+    all_water1 = []
+    all_water1 = np.array(all_water1)
+    all_asia = []
+    all_asia = np.array(all_asia)
+    all_water2 = []
+    all_water2 = np.array(all_water2)
+    all_odd1 = []
+    all_odd1 = np.array(all_odd1)
+    all_odd2 = []
+    all_odd2 = np.array(all_odd2)
+    all_odd3 = []
+    all_odd3 = np.array(all_odd3)
+    all_rate = []
+    all_rate = np.array(all_rate)
+    #获取开始时间
+    st = time.time()
+    if url == 'https://odds.500.com/index_sfc_23157.shtml' :
+        print_color(url,'red')
+    try:
+        driver.get(url)
+    except:
+        print_color("连接出错,正在重试", 'yellow')  # 同上
+        time.sleep(3)
+        driver.get(url)
+    try:
+        matchs = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[2]/a')  # XPath定位元素
+        for match in matchs:
+            sum_match = np.append(sum_match, match.text).reshape(-1)
+        match_rounds = driver.find_elements(By.XPATH, '//*[@id="main-tbody"]/tr[@data-cid="3"]/td[3]')
+        for mr in match_rounds:
+            sum_match_round = np.append(sum_match_round, mr.text).reshape(-1)
+        match_times = driver.find_elements(By.XPATH, '//*[@id="main-tbody"]/tr[@data-cid="3"]/td[4]')
+        for mt in match_times:
+            sum_match_time = np.append(sum_match_time, mt.text).reshape(-1)
+        home_teams = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[5]/a')
+        away_teams = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[7]/a')
+        for ht in home_teams:
+            sum_home_team = np.append(sum_home_team, ht.text)
+        for at in away_teams:
+            sum_away_team = np.append(sum_away_team, at.text)
+        scores = driver.find_elements(By.XPATH, '//*[@id="main-tbody"]//td[6]/span')
+        scores1 = driver.find_elements(By.XPATH, '//*[@id="main-tbody"]/tr[@data-cid="3"]/td[6]')
+
+        for score in scores1:
+            # real_score = score.find_elements(By.XPATH,'//span')
+            score_str=score.accessible_name
+            if score_str.__contains__(':'):
+                sum_home_goal = np.append(sum_home_goal, score.text[0]).reshape(-1)
+                sum_away_goal = np.append(sum_away_goal, score.text[2]).reshape(-1)
+            else:
+                sum_home_goal = np.append(sum_home_goal, score_str).reshape(-1)
+                sum_away_goal = np.append(sum_away_goal, score_str).reshape(-1)
+        water1 = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[9]')
+        for w1 in water1:
+            all_water1 = np.append(all_water1, w1.text).reshape(-1)
+        asia = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[10]')
+        for a in asia:
+            all_asia = np.append(all_asia, a.text).reshape(-1)
+        water2 = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[11]')
+        for w2 in water2:
+            all_water2 = np.append(all_water2, w2.text).reshape(-1)
+        odds1 = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[12]')
+        for odd1 in odds1:
+            all_odd1 = np.append(all_odd1, odd1.text).reshape(-1)
+        odds2 = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[13]')
+        for odd2 in odds2:
+            all_odd2 = np.append(all_odd2, odd2.text).reshape(-1)
+        odds3 = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[14]')  #
+        for odd3 in odds3:
+            all_odd3 = np.append(all_odd3, odd3.text).reshape(-1)
+        rates = driver.find_elements(By.XPATH, '/html/body/div[7]/table/tbody//td[15]')
+        for r in rates:
+            all_rate = np.append(all_rate, r.text).reshape(-1)
+    except:
+        print_color("未匹配到数据或浏览器出错", 'red')
+    try:
+        #写入字典
+        data = {"赛事": sum_match, "轮次":sum_match_round, "时间":sum_match_time, "主队": sum_home_team, "客队": sum_away_team, "主队进球": sum_home_goal,
+                "客队进球": sum_away_goal, "亚盘水位": all_water1,
+                "亚盘": all_asia, "赔率水位": all_water2, "胜": all_odd1, "平": all_odd2, "负": all_odd3,
+                    "返还率": all_rate}
+        data_df = pd.DataFrame.from_dict(data)#转换DF格式
+        # df_array.append(data_df)
+        # 写入csv文件
+        if i == 1: #如果是第一次写入就先创建文件再写入
+            data_df.to_csv("all_data_v1.0.csv", index=False, header=True, encoding='utf-8-sig')#gbk编码，防止中文乱码
+        else: #如果不是第一次写入就定义mode='a'再追加写入
+            data_df.to_csv("all_data_v1.0.csv", mode='a', index=False, header=False, encoding='utf-8-sig')#同上
+
+        #失败
+    except ValueError:
+        print_color("数据长度不一致", 'red')#输出+跳过
+        # print_color(data_df,'red')
+    except PermissionError:
+        print_color("打开文件,进程中断", 'yellow')#输出
+        sys.exit()#推出#获取数据用于训练
+    #结尾时间
+    et = time.time()
+    #计算剩余时间 公式：(结尾时间-开始时间)*剩余数据/60 单位：min
+    rt = int((len(expects) - i) * (et - st))/60
+    print_color("进度:{}/{} 完成率:{}% 剩余时间:{}min".format(i, len(expects), round(i/len(expects)*100, 2), round(rt, 1)), 'blue')
+
+# def save(data_frame_array):
+#     data_df = pd.concat(data_frame_array,join='outer')
+#     data_df.to_csv("all_data_v1.0.csv", index=False, header=True, encoding='utf-8-sig')  # gbk编码，防止中文乱码
+def get_data_to_train(expects):
+    i = 1
+    # urls = []
+    #获取比赛信息
+    for expect in expects:
+        #加载页面
+        sum_home_team = []
+        sum_home_team = np.array(sum_home_team)
+        sum_away_team = []
+        sum_away_team = np.array(sum_away_team)
+        sum_match = []
+        sum_match = np.array(sum_match)
+        sum_home_goal, sum_away_goal = [], []
+        sum_home_goal, sum_away_goal = np.array(sum_home_goal), np.array(sum_away_goal)
+        all_water1 = []
+        all_water1 = np.array(all_water1)
+        all_asia = []
+        all_asia = np.array(all_asia)
+        all_water2 = []
+        all_water2 = np.array(all_water2)
+        all_odd1 = []
+        all_odd1 = np.array(all_odd1)
+        all_odd2 = []
+        all_odd2 = np.array(all_odd2)
+        all_odd3 = []
+        all_odd3 = np.array(all_odd3)
+        all_rate = []
+        all_rate = np.array(all_rate)
+        #获取开始时间
+        st = time.time()
+        url = "https://odds.500.com/index_sfc_{}.shtml".format(expect)
+        get_data_from_web(url,i)
+        i+=1
+        # urls.append(url)
+    # splited_urls = np.array_split(urls,4)
+    # jobs = []
+    thread_number = 1
+    # for url in urls:
+    #     # jobs.append(gevent.spawn(get_data_from_web, url,thread_number))
+    #     # thread_number = thread_number + 1
+    #     # print(thread_number)
+    #     get_data_from_web(url)
+    # gevent.joinall(jobs)
+
+#启动爬虫
+if __name__ == '__main__':
+    print_color("爬取开始", 'green')
+    #加载期数(已爬取好)
+    expects = np.load("./expect.npy")
+    get_data_to_train(expects)
+    #get_dates(2023)
+    print_color("爬取结束", 'green')
+    #关闭浏览器
+    driver.quit()
